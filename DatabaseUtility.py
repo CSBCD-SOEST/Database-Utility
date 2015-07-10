@@ -10,6 +10,8 @@ import psycopg2
 import logging
 import csv
 
+#Tutorial comment!
+
 __author__ = "Christian A. Damo"
 __copyright__ = "Copyright 2014 School of Architecture, University of Hawaii at Manoa"
 __credits__ = ["Christian A. Damo", "Reed Shinsato"]
