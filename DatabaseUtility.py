@@ -20,6 +20,7 @@ __status__ = "Prototype"
 
 logging.basicConfig(filename='ADASEED_log',level=logging.DEBUG,format='%(asctime)s %(message)s')
 
+
 #this is another comment
 
 class DatabaseUtility:
