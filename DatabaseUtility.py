@@ -34,72 +34,44 @@ class DatabaseUtility:
         self.conn = psycopg2.connect(DatabaseInfo)
         self.cur = self.conn.cursor()
 
-    def truncate_table(self):
-        try:
-            self.cur.execute("BEGIN")
-            sql = "TRUNCATE check_table;"
-            self.cur.execute(sql)
-            self.conn.commit()
-        except Exception, e:
-            print e
-
     def truncate(self, tableName):
+        '''
+        Clear all data entries for specified table.
+        '''
         try:
             self.cur.execute("BEGIN")
-            sql = "TRUNCATE " + str(tableName)
+            sql = "TRUNCATE " + str(tableName) + ";"
             self.cur.execute(sql)
             self.conn.commit()
         except Exception, e:
             print e
 
-    def merge_tables(self):
+    def merge(self, source_table, destination_table, header, value_column):
         try:
             self.cur.execute("BEGIN")
-            sql = 'INSERT INTO "public".radiant_panels SELECT "public".check_table.datetime, "public".check_table.channel, "public".check_table.value, "public".check_table.sensor_id FROM "public".radiant_panels FULL OUTER JOIN "public".check_table ON "public".radiant_panels.datetime = "public".check_table.datetime AND "public".radiant_panels.channel = "public".check_table.channel AND "public".radiant_panels.value = "public".check_table.value AND "public".radiant_panels.sensor_id = "public".check_table.sensor_id WHERE "public".radiant_panels.value IS NULL;'
+            sql = 'INSERT INTO "public".' + destination_table + ' SELECT '
+            for i, column in enumerate(header):
+                sql = sql + '"public".' + source_table + '.' + column
+                if i != (len(header) - 1):
+                    sql = sql + ', '
+
+            sql = sql + ' FROM "public".' + destination_table + \
+                  ' FULL OUTER JOIN "public".' + source_table + ' ON '
+            for i, column in enumerate(header):
+                sql = sql + '"public".' + destination_table + '.' + column + \
+                      ' = "public".' + source_table + '.' + column
+                if i != (len(header) - 1):
+                    sql = sql + ' AND '
+
+            sql = sql + ' WHERE "public".' + destination_table + '.' + \
+                  value_column + ' IS NULL;'
+            # print sql
             self.cur.execute(sql)
             self.conn.commit()
+
         except Exception, e:
             print e
 
-    def merge(self, tableName, tableParam, tableToName, tableToParam, exceptions):
-        try:
-            self.cur.execute("BEGIN")
-            sqlInsertInto = 'INSERT INTO ' + self.__public(str(tableToName))
-            sqlSelect = 'SELECT ' 
-            for param in tableParam:
-                sqlSelect += self.__public(self.__join(tableName, param)) + ','
-            sqlSelect = sqlSelect[:-1]
-            sqlFrom = 'FROM ' + self.__public(tableToParam)
-            sqlFOJ = 'FULL OUTER JOIN ' + self.__public(tableName)
-            sqlOn = 'ON ' + self.__addON(tableName, tableParam, tableToName, tableToParam)
-            sqlWhere = exceptions
-            sql = self.__sqlCombine([sqlInsertInto, sqlSelect, sqlFrom, sqlFOJ, sqlOn, sqlWhere])
-            self.cur.execute(sql)
-            self.conn.commit()
-
-        except Exception, e:
-            print e
-    
-    def __sqlCombine(self, listNames):
-        sql = ""
-        for name in listNames:
-            sql += name + " "
-        sql += ";"  
-
- 
-    def __addON(self, tableName, tableparam, tableToName, tableToParam):
-        addON = ""
-        for i in range(len(tableToParam)):
-            addON += self.__public(self.__join(tableToName, tableToParam[i])) + "=" + self.__public(self.__join(tableName, tableParam[i])) + " AND "
-        addON = addON[:-5]
-        return addON
- 
-    def __public(self, name):
-        return '"public".' + str(iname)
-    
-    def __join(self, name1, name2):
-        return str(name1) + "." + str(name2) 
-    
     def copy_data_into_database(self, insertFilename, tableName, \
                                 table_fields = []):
         '''
@@ -139,7 +111,7 @@ class DatabaseUtility:
             #this executes the command stored in sql
             #it acts like you just typed the command line
             #at the psql prompt
-            sql = "COPY check_table FROM '" + os.path.abspath(insertFilename) + "' " + "DELIMITER ',' CSV;" 
+            sql = "COPY check_table FROM '" + os.path.abspath(insertFilename) + "' " + "DELIMITER ',' CSV;"
             self.cur.execute(sql)
             #this commits the command in the psql
             #similar to hitting enter
