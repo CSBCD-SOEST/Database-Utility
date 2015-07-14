@@ -24,8 +24,8 @@ else:
 database = "radiantpanels"
 user     = ""
 password = ""
-table    = "sensordata_revived"
-table_fields = ['datetime', 'sensor_sn', 'measurement']
+table    = ""
+table_fields = ["datetime","channel","value","sensor_id"]
 
 #define the folder locations for the script
 temp_folder     = "temperature"
@@ -57,12 +57,12 @@ for target in os.listdir(flow_folder):
         #let user know which file is being uploaded
         print "Uploading... " + target
         #clear check table
-        A.truncate_table()
+        A.truncate("check_table")
         #insert target file into the database
         table_fields = ["datetime","channel","value","sensor_id"]
         A.copy_data_into_database(target, "check_table", table_fields)
         #merge
-        A.merge_tables()
+        A.merge("check_table", "radiant_panels", table_fields, "value")
         #move finished file into an archive
         shutil.move(target, archive_folder)
         #without this line, the server hosting the database will run out
